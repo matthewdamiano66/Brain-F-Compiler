@@ -10,8 +10,8 @@ interface Visitor {
     fun visit(decrement: Decrement)
     fun visit(input: Input)
     fun visit(output: Output)
-    fun visit(loop: Loop)
-    fun visit(program: Program)
+    fun visit(loop: loop)
+    fun visit(program: line)
 }
 class Left() : Node{
     override fun accept(visitor: Visitor) = visitor.visit(this)
@@ -31,10 +31,10 @@ class Input() : Node{
 class Output() : Node{
     override fun accept(visitor: Visitor) = visitor.visit(this)
 }
-class Loop() : Sequence() {
+class loop() : Sequence() {
     override fun accept(visitor: Visitor) =  visitor.visit(this)
 }
-class Program() : Sequence(){
+class line() : Sequence(){
     override fun accept(visitor: Visitor) = visitor.visit(this)
 }
 abstract class Sequence() : Node{
@@ -43,63 +43,60 @@ abstract class Sequence() : Node{
         values.add(node)
     }
 }
-class InterpreterVisitor() : Visitor{
-    var mem = Array<Byte>(30000) {0}
-    var pointer = 0
+class visitorinterpreter() : Visitor{
+    var memory = Array<Byte>(30000) {0}
+    var point = 0
     override fun visit(left: Left) {
-        pointer--
+        point--
     }
     override fun visit(right: Right) {
-        pointer++
+        point++
     }
     override fun visit(increment: Increment) {
-        mem[pointer]++
+        memory[point]++
     }
     override fun visit(decrement: Decrement) {
-        mem[pointer]--
+        memory[point]--
     }
     override fun visit(input: Input) {
-        mem[pointer]
+        memory[point]
     }
     override fun visit(output: Output) {
-        println(mem[pointer].toInt().toChar())
+        println(memory[point].toInt().toChar())
     }
-    override fun visit(loop: Loop) {
+    override fun visit(loop: loop) {
         var byte : Byte = 0
-        while (mem[pointer] != byte) {
+        while (memory[point] != byte) {
             for (node in loop.values)
                 node.accept(this)
         }
     }
-    override fun visit(program: Program) {
+    override fun visit(program: line) {
         for (node in program.values){
             node.accept(this)
         }
     }
 }
-fun doParse(buf: StringBuffer, seq: Sequence): Sequence {
-    var c: Char
+fun Parse(buf: StringBuffer, seq: Sequence): Sequence {
+    var character: Char
     while (buf.length > 0) {
-        c = buf[0]
+        character = buf[0]
         buf.deleteCharAt(0)
-        when (c) {
+        when (character) {
             '<' -> seq.add(Left())
             '>' -> seq.add(Right())
             '+' -> seq.add(Increment())
             '-' -> seq.add(Decrement())
             '.' -> seq.add(Output())
             ',' -> seq.add(Input())
-            '[' -> seq.add(doParse(buf, Loop()))
+            '[' -> seq.add(Parse(buf, loop()))
             ']' -> return seq
         }
     }
     return seq
 }
-fun main(args: Array<String>) {
-    val str =
-        "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
-    val hello: Node = doParse(StringBuffer(str), Program())
-    hello.accept(InterpreterVisitor())
-    //println(str)
-    //println(hello)
+fun main() {
+    val string = "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+    val hello: Node = Parse(StringBuffer(string), line())
+    hello.accept(visitorinterpreter())
 }
